@@ -1,2 +1,3 @@
 # timetable-scheduler
 generate easy titmetable
+titmetable.html is just a normal project without backend,rest can be utlised via backend,node mongo .....
