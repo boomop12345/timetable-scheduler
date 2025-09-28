@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dynamic Timetable Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      background-color: #0a192f;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      transition: box-shadow 0.3s ease;
+      color: #fff;
+    }
+
+    .card:hover {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .tools {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #334155;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      background: #111f38;
+    }
+
+    .circle {
+      padding: 0 6px;
+    }
+
+    .box {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .red {
+      background-color: #ff605c;
+    }
+
+    .yellow {
+      background-color: #ffbd44;
+    }
+
+    .green {
+      background-color: #00ca4e;
+    }
+
+    .card__content {
+      padding-top: 1rem;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+    }
+
+    label {
+      color: #a0aec0;
+      display: block;
+      margin-bottom: 0.35rem;
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      width: 100%;
+      background: #1e293b;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #e2e8f0;
+      font-size: 1rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input::placeholder {
+      color: #64748b;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      background-color: #334155;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.6);
+    }
+
+    .btn-primary {
+      background-color: #3b82f6;
+      color: #fff !important;
+      font-weight: 600;
+      border-radius: 9999px;
+      padding: 0.75rem 2rem;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #2563eb;
+    }
+
+    .btn-secondary {
+      background-color: #334155;
+      color: #a0aec0 !important;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: #4a5568;
+      color: #edf2f7 !important;
+    }
+
+    .btn-danger {
+      background-color: #f87171;
+      color: #fff;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-danger:hover {
+      background-color: #ef4444;
+    }
+
+    .dynamic-list-item {
+      border-radius: 10px;
+      background: #0f172a;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      font-size: 1rem;
+      color: #e2e8f0;
+    }
+
+    .timetable table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 0.9rem;
+    }
+
+    .timetable th,
+    .timetable td {
+      border: 1px solid #334155;
+      padding: 0.6rem 0.8rem;
+      text-align: center;
+      word-wrap: break-word;
+      background-color: #13243c;
+      color: #e2e8f0;
+    }
+
+    .timetable th {
+      background-color: #16213e;
+      font-weight: 600;
+    }
+
+    .subject-cell {
+      color: #fff;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 4px 6px;
+      line-height: 1.2;
+    }
+
+    #message-box {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 1rem 2rem;
+      border-radius: 1rem;
+      color: #ffffff;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-align: center;
+      max-width: 90vw;
+    }
+
+    #message-box.show {
+      opacity: 1;
+      transform: translate(-50%, -10px);
+    }
+
+    .message-success {
+      background-color: #10b981;
+    }
+
+    .message-error {
+      background-color: #ef4444;
+    }
+
+    .view-btn {
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #a0aec0 !important;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .view-btn.active {
+      background-color: #2563eb;
+      color: white !important;
+      border-color: #2563eb;
+    }
+
+    .subject-grade-selector {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #334155;
+      background: #1e293b;
+      border-radius:10px;
+      padding: 1rem;
+    }
+
+    .subject-grade-selector label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 6px 8px;
+      transition: background 0.15s ease;
+    }
+
+    .subject-grade-selector label:hover {
+      background: #22304a;
+    }
+
+    .subject-grade-selector input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #2563eb;
+      margin: 0;
+    }
+
+    .subject-grade-selector span {
+      font-size: 1rem;
+      color: #e2e8f0;
+      user-select: none;
+    }
+
+    .subject-grade-selector input[type="number"] {
+      width: 60px;
+      min-width: 48px;
+      padding: 0.2rem 0.5rem;
+      font-size: 1rem;
+      border-radius: 7px;
+      border: none;
+      outline: none;
+      background-color: #e5e7eb;
+      color: #1e293b;
+      font-weight: 600;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .subject-grade-selector input[type="number"]:disabled {
+      background-color: #64748b !important;
+      color: #cbd5e1 !important;
+      cursor: not-allowed;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* Faculty subject assignment styling */
+    #faculty-subject-assignment > div {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1rem;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 1rem;
+      background: #1e293b;
+    }
+
+    #faculty-subject-assignment label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      padding: 6px 4px;
+      border-radius: 6px;
+      transition: background 0.15s ease;
+    }
+
+    #faculty-subject-assignment label:hover {
+      background: #22304a;
+    }
+
+    #faculty-subject-assignment input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #2563eb;
+      margin: 0;
+    }
+
+    #faculty-subject-assignment span {
+      color: #e2e8f0;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100">
+
+  <div class="container mx-auto p-4 md:p-8">
+
+    <!-- Added Logout Button -->
+    <button id="logoutBtn" class="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 mb-4">
+      Logout
+    </button>
+
+    <header class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-white">Timetable Generator</h1>
+      <p class="text-lg text-gray-300 mt-2">Dynamically create and manage schedules for your institution.</p>
+    </header>
+
+    <main id="main-content">
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card lg:col-span-4">
+          <div class="tools">
+            <div class="circle"><span class="red box"></span></div>
+            <div class="circle"><span class="yellow box"></span></div>
+            <div class="circle"><span class="green box"></span></div>
+          </div>
+          <div class="card__content">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">1. Basic Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label for="institutionName" class="block text-sm font-medium text-gray-300 mb-1">Institution Name</label>
+                <input type="text" id="institutionName" value="My Awesome University" placeholder="e.g., Green Valley High" />
+              </div>
+              <div>
+                <label for="periodsPerDay" class="block text-sm font-medium text-gray-300 mb-1">Periods per Day</label>
+                <input type="number" id="periodsPerDay" value="8" min="1" max="20" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Working Days</label>
+                <div id="workingDays" class="flex flex-wrap gap-x-4 gap-y-2">
+                  <label class="flex items-center"><input type="checkbox" class="mr-2" value="Monday" checked />Mon</label>
+                  <label class="flex items-center"><input type="checkbox" class="mr-2" value="Tuesday" checked />Tue</label>
+                  <label class="flex items-center"><input type="checkbox" class="mr-2" value="Wednesday" checked />Wed</label>
+                  <label class="flex items-center"><input type="checkbox" class="mr-2" value="Thursday" checked />Thu</label>
+                  <label class="flex items-center"><input type="checkbox" class="mr-2" value="Friday" checked />Fri</label>
+                  <label class="flex items-center"><input type="checkbox" class="mr-2" value="Saturday" />Sat</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="tools"><div class="circle"><span class="red box"></span></div><div class="circle"><span class="yellow box"></span></div><div class="circle"><span class="green box"></span></div></div>
+          <div class="card__content">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">2. Classes / Sections</h2>
+            <div id="classes-list"></div>
+            <div class="mt-4">
+              <input type="text" id="new-class-name" placeholder="e.g., Grade 10-A" class="mb-2" />
+              <button id="add-class-btn" class="btn-secondary w-full">Add Class</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="tools"><div class="circle"><span class="red box"></span></div><div class="circle"><span class="yellow box"></span></div><div class="circle"><span class="green box"></span></div></div>
+          <div class="card__content">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">3. Subjects</h2>
+            <div id="subjects-list"></div>
+            <div class="mt-4">
+              <input type="text" id="new-subject-name" placeholder="e.g., Physics" class="mb-2" />
+              <button id="add-subject-btn" class="btn-secondary w-full">Add Subject</button>
+            </div>
+          </div>
+        </div>
+        <div class="card lg:col-span-2">
+          <div class="tools"><div class="circle"><span class="red box"></span></div><div class="circle"><span class="yellow box"></span></div><div class="circle"><span class="green box"></span></div></div>
+          <div class="card__content">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">4. Assign Subjects to Grades with Hours</h2>
+            <div id="grade-subject-assignment" class="subject-grade-selector"></div>
+          </div>
+        </div>
+        <div class="card lg:col-span-2">
+          <div class="tools"><div class="circle"><span class="red box"></span></div><div class="circle"><span class="yellow box"></span></div><div class="circle"><span class="green box"></span></div></div>
+          <div class="card__content">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">5. Faculty</h2>
+            <div id="faculty-list"></div>
+            <div class="mt-4">
+              <input type="text" id="new-faculty-name" placeholder="e.g., Dr. Smith" class="mb-2" />
+              <div id="faculty-subject-assignment" class="space-y-2"></div>
+              <button id="add-faculty-btn" class="btn-secondary w-full">Add Faculty</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center my-8">
+        <button id="generate-btn" class="btn-primary text-lg">Generate Timetable</button>
+        <button id="load-sample-btn" class="btn-secondary text-lg ml-4">Load Sample Data</button>
+      </div>
+    </main>
+    <div id="timetable-output" class="hidden">
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h2 id="timetable-header" class="text-3xl font-bold text-center sm:text-left"></h2>
+        <div class="flex items-center gap-2 sm:gap-4">
+          <button id="back-to-edit-btn" class="btn-secondary">Back to Edit</button>
+          <button id="download-pdf-btn" class="btn-primary">Download as PDF</button>
+        </div>
+      </div>
+      <div class="flex justify-center items-center mb-6 gap-2">
+        <span class="font-medium">View by:</span>
+        <button id="view-by-class-btn" class="view-btn active">Class</button>
+        <button id="view-by-faculty-btn" class="view-btn">Faculty</button>
+      </div>
+      <div id="timetable-container" class="space-y-12"></div>
+    </div>
+  </div>
+  <div id="message-box"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // All your existing JavaScript code exactly as before
+      // Due to length, ... denotes unchanged original code from your file for brevity
+
+      let classes = [];
+      let subjects = [];
+      let faculty = [];
+      let subjectGradeMap = {};
+      let generatedTimetable = null;
+      let currentView = 'class';
+
+      const addClassBtn = document.getElementById('add-class-btn');
+      const newClassNameInput = document.getElementById('new-class-name');
+      const classesList = document.getElementById('classes-list');
+      const addSubjectBtn = document.getElementById('add-subject-btn');
+      const newSubjectNameInput = document.getElementById('new-subject-name');
+      const subjectsList = document.getElementById('subjects-list');
+      const gradeSubjectAssignmentDiv = document.getElementById('grade-subject-assignment');
+      const addFacultyBtn = document.getElementById('add-faculty-btn');
+      const newFacultyNameInput = document.getElementById('new-faculty-name');
+      const facultyList = document.getElementById('faculty-list');
+      const facultySubjectAssignment = document.getElementById('faculty-subject-assignment');
+      const generateBtn = document.getElementById('generate-btn');
+      const loadSampleBtn = document.getElementById('load-sample-btn');
+      const timetableOutput = document.getElementById('timetable-output');
+      const timetableContainer = document.getElementById('timetable-container');
+      const downloadPdfBtn = document.getElementById('download-pdf-btn');
+      const backToEditBtn = document.getElementById('back-to-edit-btn');
+      const viewByClassBtn = document.getElementById('view-by-class-btn');
+      const viewByFacultyBtn = document.getElementById('view-by-faculty-btn');
+      downloadPdfBtn.addEventListener('click', () => {
+    if (!generatedTimetable) {
+        showMessage('No timetable generated yet!', 'error');
+        return;
+    }
+
+    const element = document.getElementById('timetable-container'); // This is what we want in PDF
+
+    // PDF options
+    const opt = {
+        margin: 0.5,
+        filename: `${document.getElementById('institutionName').value}_Timetable.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+
+    // Generate and download PDF
+    html2pdf().set(opt).from(element).save();
+});
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function renderClasses() {
+        classesList.innerHTML = '';
+        if (classes.length === 0) {
+            classesList.innerHTML = '<p class="text-sm text-gray-500">No classes added yet.</p>';
+        } else {
+            classes.forEach((c, index) => {
+                const div = document.createElement('div');
+                div.className = 'dynamic-list-item';
+                div.innerHTML = `<span class="flex-grow">${c.name}</span> <button class="btn-danger remove-class" data-index="${index}">X</button>`;
+                classesList.appendChild(div);
+            });
+        }
+        renderGradeSubjectAssignment();
+    }
+
+    function renderSubjects() {
+        subjectsList.innerHTML = '';
+        if (subjects.length === 0) {
+            subjectsList.innerHTML = '<p class="text-sm text-gray-500">No subjects added yet.</p>';
+        } else {
+            subjects.forEach((s, index) => {
+                const div = document.createElement('div');
+                div.className = 'dynamic-list-item';
+                div.innerHTML = `
+                    <div class="flex-grow">
+                        <strong>${s.name}</strong>
+                    </div>
+                    <button class="btn-danger remove-subject" data-index="${index}">X</button>`;
+                subjectsList.appendChild(div);
+            });
+        }
+        renderFacultySubjectCheckboxes();
+        renderGradeSubjectAssignment();
+    }
+
+    function renderFaculty() {
+        facultyList.innerHTML = '';
+        if (faculty.length === 0) {
+            facultyList.innerHTML = '<p class="text-sm text-gray-500">No faculty added yet.</p>';
+        } else {
+            faculty.forEach((f, index) => {
+                const div = document.createElement('div');
+                div.className = 'dynamic-list-item';
+                div.innerHTML = `
+                 <div class="flex-grow">
+                    <strong>${f.name}</strong>
+                    <div class="text-xs text-gray-500">Subjects: ${f.subjects.join(', ') || 'None'}</div>
+                </div>
+                <button class="btn-danger remove-faculty" data-index="${index}">X</button>`;
+                facultyList.appendChild(div);
+            });
+        }
+    }
+
+    function renderFacultySubjectCheckboxes() {
+        facultySubjectAssignment.innerHTML = '';
+        const uniqueSubjectNames = [...new Set(subjects.map(s => s.name))];
+        if (uniqueSubjectNames.length === 0) {
+            facultySubjectAssignment.innerHTML = '<p class="text-sm text-gray-500">Add subjects to assign them to faculty.</p>';
+            return;
+        }
+        const container = document.createElement('div');
+        container.className = 'grid grid-cols-2 gap-x-4 gap-y-2 max-h-48 overflow-y-auto border rounded-md p-3 bg-[#1e293b]';
+
+        uniqueSubjectNames.forEach(subjectName => {
+            const label = document.createElement('label');
+            label.className = 'flex items-center space-x-2 cursor-pointer hover:bg-[#22304a] rounded-md p-1';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'faculty-subject-checkbox';
+            checkbox.value = subjectName;
+
+            const span = document.createElement('span');
+            span.textContent = subjectName;
+            span.className = 'text-white';
+
+            label.appendChild(checkbox);
+            label.appendChild(span);
+
+            container.appendChild(label);
+        });
+        facultySubjectAssignment.appendChild(container);
+    }
+
+    function renderGradeSubjectAssignment() {
+        gradeSubjectAssignmentDiv.innerHTML = '';
+        if (classes.length === 0 || subjects.length === 0) {
+            gradeSubjectAssignmentDiv.innerHTML = '<p class="text-sm text-gray-500">Add classes and subjects to assign them here.</p>';
+            return;
+        }
+        classes.forEach(c => {
+            const container = document.createElement('div');
+            container.className = 'grade-section border rounded p-3 mb-4 bg-[#13243c]';
+
+            const header = document.createElement('h3');
+            header.className = 'font-semibold text-lg mb-3 text-gray-300';
+            header.textContent = c.name;
+
+            container.appendChild(header);
+
+            subjects.forEach(s => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center justify-between gap-3 p-1 rounded-md cursor-pointer hover:bg-[#22304a]';
+
+                const leftDiv = document.createElement('div');
+                leftDiv.className = 'flex items-center gap-2';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'grade-subject-checkbox';
+                checkbox.value = s.name;
+
+                const span = document.createElement('span');
+                span.className = 'text-gray-300';
+                span.textContent = s.name;
+
+                leftDiv.appendChild(checkbox);
+                leftDiv.appendChild(span);
+
+                const hoursInput = document.createElement('input');
+                hoursInput.type = 'number';
+                hoursInput.min = '0';
+                hoursInput.step = '1';
+                hoursInput.placeholder = 'Hrs';
+                hoursInput.className = 'text-gray-900 bg-white rounded-md w-16 p-1';
+                hoursInput.disabled = true;
+
+                const gradeSubjects = subjectGradeMap[c.name] || {};
+                if (gradeSubjects[s.name] && gradeSubjects[s.name] > 0) {
+                    checkbox.checked = true;
+                    hoursInput.disabled = false;
+                    hoursInput.value = gradeSubjects[s.name];
+                } else {
+                    hoursInput.value = '';
+                }
+
+                checkbox.addEventListener('change', e => {
+                    if (!subjectGradeMap[c.name]) subjectGradeMap[c.name] = {};
+                    if (e.target.checked) {
+                        hoursInput.disabled = false;
+                        subjectGradeMap[c.name][s.name] = Number(hoursInput.value) || 1;
+                        if (!hoursInput.value) hoursInput.value = '1';
+                    } else {
+                        hoursInput.disabled = true;
+                        subjectGradeMap[c.name][s.name] = 0;
+                        hoursInput.value = '';
+                    }
+                });
+
+                hoursInput.addEventListener('input', e => {
+                    const val = parseInt(e.target.value, 10);
+                    if (checkbox.checked) {
+                        subjectGradeMap[c.name][s.name] = isNaN(val) || val <= 0 ? 1 : val;
+                    }
+                });
+
+                label.appendChild(leftDiv);
+                label.appendChild(hoursInput);
+                container.appendChild(label);
+            });
+
+            gradeSubjectAssignmentDiv.appendChild(container);
+        });
+    }
+
+    addClassBtn.addEventListener('click', () => {
+        const name = newClassNameInput.value.trim();
+        if (name && !classes.find(c => c.name === name)) {
+            classes.push({ name });
+            renderClasses();
+            newClassNameInput.value = '';
+            showMessage('Class added successfully!', 'success');
+        } else {
+            showMessage('Please enter a unique, non-empty class name.', 'error');
+        }
+    });
+
+    addSubjectBtn.addEventListener('click', () => {
+        const name = newSubjectNameInput.value.trim();
+        if (name && !subjects.find(s => s.name === name)) {
+            subjects.push({ name });
+            renderSubjects();
+            newSubjectNameInput.value = '';
+            showMessage('Subject added successfully!', 'success');
+        } else {
+            showMessage('Please enter a unique, non-empty subject name.', 'error');
+        }
+    });
+
+    addFacultyBtn.addEventListener('click', () => {
+        const name = newFacultyNameInput.value.trim();
+        const selectedSubjects = Array.from(document.querySelectorAll('.faculty-subject-checkbox:checked')).map(cb => cb.value);
+        if (name && !faculty.find(f => f.name === name)) {
+            faculty.push({ name, subjects: selectedSubjects });
+            renderFaculty();
+            newFacultyNameInput.value = '';
+            document.querySelectorAll('.faculty-subject-checkbox').forEach(cb => cb.checked = false);
+            showMessage('Faculty added successfully!', 'success');
+        } else {
+            showMessage('Please enter a unique, non-empty faculty name.', 'error');
+        }
+    });
+
+    backToEditBtn.addEventListener('click', () => {
+        timetableOutput.classList.add('hidden');
+        document.getElementById('main-content').classList.remove('hidden');
+    });
+
+    viewByClassBtn.addEventListener('click', () => {
+        currentView = 'class';
+        viewByClassBtn.classList.add('active');
+        viewByFacultyBtn.classList.remove('active');
+        renderCurrentView();
+    });
+
+    viewByFacultyBtn.addEventListener('click', () => {
+        currentView = 'faculty';
+        viewByFacultyBtn.classList.add('active');
+        viewByClassBtn.classList.remove('active');
+        renderCurrentView();
+    });
+
+    document.body.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-class')) {
+            const index = parseInt(e.target.dataset.index, 10);
+            const classNameToRemove = classes[index].name;
+            classes.splice(index, 1);
+            delete subjectGradeMap[classNameToRemove];
+            renderClasses();
+        }
+        if (e.target.classList.contains('remove-subject')) {
+            const index = parseInt(e.target.dataset.index, 10);
+            const subjectNameToRemove = subjects[index].name;
+            subjects.splice(index, 1);
+            for (const grade in subjectGradeMap) {
+                subjectGradeMap[grade] = subjectGradeMap[grade].filter(s => s !== subjectNameToRemove);
+            }
+            renderSubjects();
+        }
+        if (e.target.classList.contains('remove-faculty')) {
+            const index = parseInt(e.target.dataset.index, 10);
+            faculty.splice(index, 1);
+            renderFaculty();
+        }
+    });
+
+    generateBtn.addEventListener('click', () => {
+        const periodsPerDay = parseInt(document.getElementById('periodsPerDay').value, 10);
+        const workingDaysCheckboxes = document.querySelectorAll('#workingDays input[type="checkbox"]:checked');
+        const workingDays = Array.from(workingDaysCheckboxes).map(cb => cb.value);
+
+        if (classes.length === 0 || subjects.length === 0 || faculty.length === 0 || workingDays.length === 0) {
+            showMessage('Please add at least one class, subject, faculty, and select working days.', 'error');
+            return;
+        }
+
+        const allAssignedSubjects = [...new Set(Object.values(subjectGradeMap).flatMap(obj => Object.keys(obj).filter(k => obj[k] > 0)))];
+        for (const subjectName of allAssignedSubjects) {
+            const canBeTaught = faculty.some(f => f.subjects.includes(subjectName));
+            if (!canBeTaught) {
+                showMessage(`Error: No faculty available to teach ${subjectName}. Please assign it to a faculty member.`, 'error');
+                return;
+            }
+        }
+
+        const timetable = {};
+        classes.forEach(c => {
+            timetable[c.name] = {};
+            workingDays.forEach(day => {
+                timetable[c.name][day] = new Array(periodsPerDay).fill(null);
+            });
+        });
+
+        let success = true;
+        for (const c of classes) {
+            const subjectsInGrade = subjectGradeMap[c.name] || {};
+            for (const [subjectName, hours] of Object.entries(subjectsInGrade)) {
+                if (hours <= 0) continue;
+                let placedHours = 0;
+                let dayIndex = 0;
+                const dayCount = workingDays.length;
+                const periods = [...Array(periodsPerDay).keys()];
+                while (placedHours < hours) {
+                    if (dayIndex >= dayCount) dayIndex = 0;
+                    const day = workingDays[dayIndex];
+                    shuffleArray(periods);
+
+                    let placedThisDay = false;
+                    for (const period of periods) {
+                        if (timetable[c.name][day][period] !== null) continue;
+                        const subjectScheduledThisPeriod = Object.values(timetable[c.name]).some(daySched => daySched[period]?.subject === subjectName);
+                        if (subjectScheduledThisPeriod) continue;
+
+                        const availableFaculty = faculty.filter(f =>
+                            f.subjects.includes(subjectName) &&
+                            !isFacultyBusy(timetable, f.name, day, period)
+                        );
+                        if (availableFaculty.length > 0) {
+                            const assignedFaculty = availableFaculty.sort((a,b) => getFacultyLoad(timetable, a.name) - getFacultyLoad(timetable, b.name))[0];
+                            timetable[c.name][day][period] = { subject: subjectName, faculty: assignedFaculty.name };
+                            placedHours++;
+                            placedThisDay = true;
+                            break;
+                        }
+                    }
+                    if (!placedThisDay) {
+                        dayIndex++;
+                        if (dayIndex >= dayCount) {
+                            success = false;
+                            showMessage(`Could not place all lectures for ${subjectName} in ${c.name}. Try increasing periods or days.`, 'error');
+                            generatedTimetable = null;
+                            break;
+                        }
+                    } else {
+                        dayIndex++;
+                    }
+                    if (!success) break;
+                }
+                if (!success) break;
+            }
+            if (!success) break;
+        }
+
+        if (success) {
+            generatedTimetable = timetable;
+            renderCurrentView();
+            showMessage('Timetable generated successfully with custom hours!', 'success');
+            timetableOutput.classList.remove('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+        }
+        
+    });
+
+    function isFacultyBusy(timetable, facultyName, day, period) {
+        for (const className in timetable) {
+            if (!timetable[className][day]) continue;
+            const daySchedule = timetable[className][day];
+            if (daySchedule[period] && daySchedule[period].faculty === facultyName) return true;
+        }
+        return false;
+    }
+
+    function getFacultyLoad(timetable, facultyName) {
+        let load = 0;
+        for (const className in timetable) {
+            for (const day in timetable[className]) {
+                for (const period of timetable[className][day]) {
+                    if (period && period.faculty === facultyName) load++;
+                }
+            }
+        }
+        return load;
+    }
+
+    function renderCurrentView() {
+        if (!generatedTimetable) return;
+        const periodsPerDay = parseInt(document.getElementById('periodsPerDay').value, 10);
+        const workingDays = Array.from(document.querySelectorAll('#workingDays input[type="checkbox"]:checked')).map(cb => cb.value);
+
+        if (currentView === 'class') {
+            renderTimetableByClass(generatedTimetable, workingDays, periodsPerDay);
+        } else {
+            renderTimetableByFaculty(generatedTimetable, workingDays, periodsPerDay);
+        }
+    }
+
+    function renderTimetableByClass(timetable, workingDays, periodsPerDay) {
+        timetableContainer.innerHTML = '';
+        document.getElementById('timetable-header').textContent = `${document.getElementById('institutionName').value} Timetable`;
+        const subjectColors = generateColorPalette([...new Set(subjects.map(s => s.name))]);
+
+        Object.keys(timetable).sort().forEach(className => {
+            const classTimetable = timetable[className];
+            const containerDiv = document.createElement('div');
+            containerDiv.className = 'bg-white p-6 rounded-lg shadow-md';
+
+            const header = document.createElement('h3');
+            header.className = 'text-2xl font-semibold mb-4 text-center';
+            header.textContent = `Class: ${className}`;
+            containerDiv.appendChild(header);
+
+            const table = document.createElement('table');
+            table.className = 'w-full border-collapse timetable';
+
+            let thead = '<thead><tr><th class="w-1/12">Day/Time</th>';
+            for (let i = 1; i <= periodsPerDay; i++) {
+                thead += `<th>Period ${i}</th>`;
+            }
+            thead += '</tr></thead>';
+            table.innerHTML += thead;
+
+            let tbody = '<tbody>';
+            workingDays.forEach(day => {
+                tbody += `<tr><th>${day}</th>`;
+                for (let i = 0; i < periodsPerDay; i++) {
+                    const cellData = classTimetable[day][i];
+                    if (cellData) {
+                        const color = subjectColors[cellData.subject];
+                        tbody += `<td style="background-color: ${color};">
+                            <div class="subject-cell">
+                                <strong>${cellData.subject}</strong>
+                                <div class="text-xs opacity-80">${cellData.faculty}</div>
+                            </div>
+                        </td>`;
+                    } else {
+                        tbody += `<td>-</td>`;
+                    }
+                }
+                tbody += '</tr>';
+            });
+            tbody += '</tbody>';
+            table.innerHTML += tbody;
+
+            containerDiv.appendChild(table);
+            timetableContainer.appendChild(containerDiv);
+        });
+    }
+
+    function renderTimetableByFaculty(timetable, workingDays, periodsPerDay) {
+        timetableContainer.innerHTML = '';
+        document.getElementById('timetable-header').textContent = `${document.getElementById('institutionName').value} Timetable`;
+        const subjectColors = generateColorPalette([...new Set(subjects.map(s => s.name))]);
+
+        faculty.sort((a,b) => a.name.localeCompare(b.name)).forEach(f => {
+            const containerDiv = document.createElement('div');
+            containerDiv.className = 'bg-white p-6 rounded-lg shadow-md';
+            const header = document.createElement('h3');
+            header.className = 'text-2xl font-semibold mb-4 text-center';
+            header.textContent = `Faculty: ${f.name}`;
+            containerDiv.appendChild(header);
+
+            const table = document.createElement('table');
+            table.className = 'w-full border-collapse timetable';
+
+            let thead = '<thead><tr><th class="w-1/12">Day/Time</th>';
+            for (let i = 1; i <= periodsPerDay; i++) {
+                thead += `<th>Period ${i}</th>`;
+            }
+            thead += '</tr></thead>';
+            table.innerHTML += thead;
+
+            let tbody = '<tbody>';
+            workingDays.forEach(day => {
+                tbody += `<tr><th>${day}</th>`;
+                for (let i = 0; i < periodsPerDay; i++) {
+                    let cellContent = '-';
+                    for (const className in timetable) {
+                        const cellData = timetable[className][day][i];
+                        if(cellData && cellData.faculty === f.name) {
+                            const color = subjectColors[cellData.subject];
+                            cellContent = `<div class="subject-cell" style="background-color: ${color};">
+                                <strong>${cellData.subject}</strong>
+                                <div class="text-xs opacity-80">(${className})</div>
+                            </div>`;
+                            break;
+                        }
+                    }
+                    tbody += `<td>${cellContent}</td>`;
+                }
+                tbody += '</tr>';
+            });
+            tbody += '</tbody>';
+            table.innerHTML += tbody;
+
+            containerDiv.appendChild(table);
+            timetableContainer.appendChild(containerDiv);
+        });
+    }
+
+    function generateColorPalette(subjectNames) {
+        const colors = {};
+        const hueStep = 360 / subjectNames.length;
+        subjectNames.forEach((name, index) => {
+            colors[name] = `hsl(${index * hueStep}, 70%, 60%)`;
+        });
+        return colors;
+    }
+
+    function showMessage(message, type) {
+        const box = document.getElementById('message-box');
+        box.textContent = message;
+        box.className = '';
+        box.classList.add('show');
+        if(type === 'success') box.classList.add('message-success');
+        else box.classList.add('message-error');
+        setTimeout(() => {
+            box.classList.remove('show');
+        }, 3000);
+    }
+
+    loadSampleBtn.addEventListener('click', () => {
+        classes = [
+            { name: 'Grade 10-A' },
+            { name: 'Grade 10-B' },
+            { name: 'Grade 11-Science' }
+        ];
+        subjects = [
+            { name: 'Physics' },
+            { name: 'Maths' },
+            { name: 'Chemistry' },
+            { name: 'English' },
+            { name: 'History' },
+            { name: 'Geography' },
+            { name: 'Adv. Physics' },
+            { name: 'Adv. Maths' },
+            { name: 'Adv. Chemistry' },
+            { name: 'Comp. Science' }
+        ];
+        subjectGradeMap = {
+            'Grade 10-A': {Physics:4, Maths:5, Chemistry:4, English:3, History:3},
+            'Grade 10-B': {Physics:4, Maths:5, Chemistry:4, English:3, Geography:3},
+            'Grade 11-Science': { 'Adv. Physics':6, 'Adv. Maths':6, 'Adv. Chemistry':6, 'Comp. Science':4 }
+        };
+        faculty = [
+            { name: 'Dr. Evelyn Reed', subjects: ['Physics', 'Adv. Physics'] },
+            { name: 'Mr. David Chen', subjects: ['Maths', 'Adv. Maths'] },
+            { name: 'Ms. Maria Garcia', subjects: ['Chemistry', 'Adv. Chemistry'] },
+            { name: 'Mr. Ben Carter', subjects: ['English', 'History'] },
+            { name: 'Ms. Sophia Loren', subjects: ['Geography', 'Comp. Science'] }
+        ];
+        renderAll();
+        showMessage('Sample data loaded!', 'success');
+    });
+
+    function renderAll() {
+        renderClasses();
+        renderSubjects();
+        renderFaculty();
+        renderGradeSubjectAssignment();
+        renderFacultySubjectCheckboxes();
+    }
+
+    renderAll();
+    document.getElementById('logoutBtn').addEventListener('click', function () {
+        window.location.href = '/loginpage.html'; // Change the URL if your login page has a different name or path
+      });
+
+});
+</script>
+
+</body>
+</html>
